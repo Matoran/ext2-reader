@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 import struct
 
 
@@ -51,7 +52,18 @@ class ext2_superbloc(object):
     # f_bfree is use to compute the "used" field from df command
     # f_bavail is the available number of blocs
     def statfs(self, path):
-        return
+        return {
+            'F_BSIZE': 0,
+            'F_FRSIZE': 0,
+            'F_BLOCKS': 0,
+            'F_BFREE': 10,
+            'F_BAVAIL': 10,
+            'F_FILES': 0,
+            'F_FFREE': 0,
+            'F_FAVAIL': 0,
+            'F_FLAG': 0,
+            'F_NAMEMAX': 0
+        }
 
     def __str__(self):
         return "block_per_group:" + str(self.s_blocks_per_group) + "\n" + \
