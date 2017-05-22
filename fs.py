@@ -56,6 +56,21 @@ class ext2(object):
     # only works with absolute paths
 
     def namei(self, path):
+        if path[0] != "/":
+            return
+        print path
+        inode = 2
+        directory = self.inodes_list[inode]
+        print directory
+        path_splitted = path.split("/")
+        print path_splitted
+
+        for file in path_splitted:
+            if file != '':
+                inode = self.lookup_entry(directory, file)
+                directory = self.inodes_list[inode]
+            if path_splitted[-1] == file:
+                return inode
         return
 
     def bmap(self, inode, blk):

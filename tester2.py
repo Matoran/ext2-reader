@@ -114,8 +114,8 @@ class Ext2Tester(unittest.TestCase):
     def test_7_fs_lookup_entry(self):
         ext2fs = ext2(workfile)
         # lookup_entry, inode 426 ("/usr/src/ps-0.97"), lookup for ps.c
-        # inode = ext2fs.lookup_entry(ext2fs.inodes_list[23435], "ps.c")
-        # self.assertEqual(inode, LOOKUPINODE1)
+        inode = ext2fs.lookup_entry(ext2fs.inodes_list[23435], "ps.c")
+        self.assertEqual(inode, LOOKUPINODE1)
         # lookup_entry, inode 113 ("/usr/src/linux/fs/minix"), lookup for namei.c
         inode = ext2fs.lookup_entry(ext2fs.inodes_list[23122], "namei.c")
         self.assertEqual(inode, LOOKUPINODE2)
