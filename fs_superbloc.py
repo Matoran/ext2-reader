@@ -9,6 +9,9 @@ class ext2_superbloc(object):
         # => 1. Open diskfilename
         # => 2. Read the serialized superbloc content
         # => 3. Unserialized it
+        file = open(diskfilename)
+        file.seek(1024)
+        self.read_super(file.read(1024))
         return
 
     def read_super(self, raw_sb):
