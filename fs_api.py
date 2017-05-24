@@ -6,6 +6,9 @@ import struct
 
 class ext2_file_api(object):
     def __init__(self, filesystem):
+        self.fs = filesystem
+        self.files = []
+        self.frees = []
         return
 
     # For all symlink shorter than 60 bytes long, the data is stored within the inode itself; 
@@ -20,15 +23,39 @@ class ext2_file_api(object):
     # inode. file descriptor is just an handle used to find the
     # corresponding inode. This handle is allocated by the filesystem.
     def open(self, path):
-        return
+        if len(self.frees) == 0:
+            self.files.append(self.fs.namei(path))
+            return len(self.files) - 1
+        else:
+            index = self.frees.pop()
+            self.files[index] = self.fs.namei(path)
+            return index
 
     # release file descriptor entry, should we flush buffers : no, this is separate ?
     # openfiles[fd] = None 
     def close(self, fd):
+        self.files[fd] = None
+        self.frees.append(fd)
         return
 
     # read nbytes from the file descriptor previously opened, starting at the given offset
     def read(self, fd, offset, count):
+        res = ""
+        inode = self.fs.inodes_list[self.files[fd]]
+
+        total_left = 0 if offset > inode.i_size else min(inode.i_size - offset, count)
+        buffer_offset = 0
+        while total_left > 0:
+            bloc_num = self.fs.bmap(inode, int(offset / self.fs.disk.blksize))
+            offset_in_bloc = offset % self.fs.disk.blksize
+            to_read = min(self.fs.disk.blksize - offset_in_bloc, total_left)
+            if bloc_num != 0:
+                blk = self.fs.disk.read_bloc(bloc_num)
+                res += blk[offset_in_bloc:offset_in_bloc + to_read]
+
+            offset += to_read
+            buffer_offset += to_read
+            total_left -= to_read
         return res
 
     # get the attributes of a node in a stat dictionnary :
@@ -37,6 +64,20 @@ class ext2_file_api(object):
     # 'st_nlink': 36, 'st_mode': 16877, 'st_size': 4096, 'st_gid': 0, \
     #  'st_uid': 0, 'st_atime': 1423220038.6543322}
     def attr(self, path):
+        inode = self.fs.inodes_list[self.fs.namei(path)]
+        print inode
+        res = {
+            'st_ctime': inode.i_ctime,
+            'st_mtime': inode.i_mtime,
+            'st_blocks': 1288,
+            'st_gid': inode.i_gid,
+            'st_nlink': inode.i_links_count,
+            'st_mode': inode.i_mode,
+            'st_blksize': self.fs.disk.blksize,
+            'st_size': inode.i_size,
+            'st_atime': inode.i_atime,
+            'st_uid': inode.i_uid
+        }
         return res
 
         # implementation of readdir(3) :
@@ -45,4 +86,6 @@ class ext2_file_api(object):
     # note that is not a syscall but a function from the libc§
 
     def dodir(self, path):
+        inode = self.fs.inodes_list[self.fs.namei(path)]
+
         return dirlist

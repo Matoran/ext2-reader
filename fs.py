@@ -58,12 +58,9 @@ class ext2(object):
     def namei(self, path):
         if path[0] != "/":
             return
-        print path
         inode = 2
         directory = self.inodes_list[inode]
-        print directory
         path_splitted = path.split("/")
-        print path_splitted
 
         for file in path_splitted:
             if file != '':
