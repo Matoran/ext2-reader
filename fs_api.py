@@ -3,6 +3,8 @@ import hexdump
 import stat
 import struct
 
+from math import ceil
+
 
 class ext2_file_api(object):
     def __init__(self, filesystem):
@@ -16,6 +18,16 @@ class ext2_file_api(object):
     # This is a worthwhile optimisation as it we avoid allocating a full block for the symlink, 
     # and most symlinks are less than 60 characters long. 
     def readlink(self, path):
+        inode_num = self.fs.namei(path)
+        inode = self.fs.inodes_list[inode_num]
+        if inode.i_size < 60:
+            return struct.pack("<15I", *inode.i_blocks).rstrip('\0')
+        else:
+            for i in xrange(int(ceil(float(inode.i_size)/self.fs.disk.blksize))):
+                bloc = self.fs.bmap(inode, i)
+                if bloc == 0:
+                    return
+                return self.fs.disk.read_bloc(bloc).rstrip('\0')
         return
 
     # open a file, i.e reserve a file descriptor
@@ -64,12 +76,12 @@ class ext2_file_api(object):
     # 'st_nlink': 36, 'st_mode': 16877, 'st_size': 4096, 'st_gid': 0, \
     #  'st_uid': 0, 'st_atime': 1423220038.6543322}
     def attr(self, path):
+
         inode = self.fs.inodes_list[self.fs.namei(path)]
-        print inode
         res = {
             'st_ctime': inode.i_ctime,
             'st_mtime': inode.i_mtime,
-            'st_blocks': 1288,
+            'st_blocks': int(ceil(float(inode.i_size)/512)),
             'st_gid': inode.i_gid,
             'st_nlink': inode.i_links_count,
             'st_mode': inode.i_mode,
@@ -87,5 +99,16 @@ class ext2_file_api(object):
 
     def dodir(self, path):
         inode = self.fs.inodes_list[self.fs.namei(path)]
-
+        dirlist = []
+        for i in xrange(int(ceil(float(inode.i_size)/self.fs.disk.blksize))):
+            bloc = self.fs.bmap(inode, i)
+            if bloc == 0:
+                return
+            data = self.fs.disk.read_bloc(bloc)
+            shift = 0
+            name_length = 0
+            while shift + name_length+8 < self.fs.disk.blksize:
+                inode, record_length, name_length = struct.unpack_from("<IHB", data, shift)
+                dirlist.append(unicode(data[shift+8:shift + name_length+8]))
+                shift += record_length
         return dirlist

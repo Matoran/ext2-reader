@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from math import ceil
 
 from fs_inode import ext2_inode
 import fs_superbloc
@@ -12,14 +13,11 @@ from bloc_device import *
 
 class ext2(object):
     def __init__(self, filename):
-        self.sb = fs_superbloc.ext2_superbloc(filename)
-        self.disk = bloc_device(1024 << self.sb.s_log_block_size, filename)
+        self.superbloc = fs_superbloc.ext2_superbloc(filename)
+        self.disk = bloc_device(1024 << self.superbloc.s_log_block_size, filename)
 
         file = open(filename)
-
-        blkgrps = self.sb.s_blocks_count/self.sb.s_blocks_per_group
-        if self.sb.s_blocks_count%self.sb.s_blocks_per_group:
-            blkgrps += 1
+        blkgrps = int(ceil(float(self.superbloc.s_blocks_count) / self.superbloc.s_blocks_per_group))
         self.bgroup_desc_list = []
         for i in xrange(blkgrps):
             file.seek(2048+i*32)
@@ -36,9 +34,9 @@ class ext2(object):
         self.inodes_list = []
         self.inodes_list.append(ext2_inode(None))
         for group in self.bgroup_desc_list:
-            for i in xrange(0, self.sb.s_inodes_per_group):
-                file.seek(group.bg_inode_table*self.disk.blksize + i*self.sb.s_inode_size)
-                self.inodes_list.append(ext2_inode(file.read(self.sb.s_inode_size), i+1))
+            for i in xrange(0, self.superbloc.s_inodes_per_group):
+                file.seek(group.bg_inode_table * self.disk.blksize + i * self.superbloc.s_inode_size)
+                self.inodes_list.append(ext2_inode(file.read(self.superbloc.s_inode_size), i + 1))
         self.direct = 12
         self.single_indirect = self.disk.blksize/4
         self.double_indirect = self.single_indirect**2
@@ -58,15 +56,20 @@ class ext2(object):
     def namei(self, path):
         if path[0] != "/":
             return
+        elif path == "/":
+            return 2
         inode = 2
         directory = self.inodes_list[inode]
         path_splitted = path.split("/")
-
+        actualPath = ""
+        path_splitted.pop(0)
         for file in path_splitted:
-            if file != '':
-                inode = self.lookup_entry(directory, file)
-                directory = self.inodes_list[inode]
-            if path_splitted[-1] == file:
+            actualPath += "/" + file
+            inode = self.lookup_entry(directory, file)
+            if inode is None:
+                print path
+            directory = self.inodes_list[inode]
+            if actualPath == path:
                 return inode
         return
 
@@ -115,7 +118,7 @@ class ext2(object):
     # - the end of the linked list as an inode num equal to zero.
 
     def lookup_entry(self, dinode, name):
-        for i in xrange(dinode.i_size):
+        for i in xrange(int(ceil(float(dinode.i_size)/self.disk.blksize))):
             bloc = self.bmap(dinode, i)
             if bloc == 0:
                 return
@@ -127,5 +130,4 @@ class ext2(object):
                 if data[shift+8:shift + name_length+8] == name:
                     return inode
                 shift += record_length
-
         return
