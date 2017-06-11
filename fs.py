@@ -67,7 +67,7 @@ class ext2(object):
             actualPath += "/" + file
             inode = self.lookup_entry(directory, file)
             if inode is None:
-                print path
+                raise OSError(2, 'No such file or directory', path)
             directory = self.inodes_list[inode]
             if actualPath == path:
                 return inode

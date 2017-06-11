@@ -76,8 +76,8 @@ class ext2_file_api(object):
     # 'st_nlink': 36, 'st_mode': 16877, 'st_size': 4096, 'st_gid': 0, \
     #  'st_uid': 0, 'st_atime': 1423220038.6543322}
     def attr(self, path):
-
-        inode = self.fs.inodes_list[self.fs.namei(path)]
+        inode_num = self.fs.namei(path)
+        inode = self.fs.inodes_list[inode_num]
         res = {
             'st_ctime': inode.i_ctime,
             'st_mtime': inode.i_mtime,
@@ -108,7 +108,7 @@ class ext2_file_api(object):
             shift = 0
             name_length = 0
             while shift + name_length+8 < self.fs.disk.blksize:
-                inode, record_length, name_length = struct.unpack_from("<IHB", data, shift)
+                inode_num, record_length, name_length = struct.unpack_from("<IHB", data, shift)
                 dirlist.append(unicode(data[shift+8:shift + name_length+8]))
                 shift += record_length
         return dirlist
