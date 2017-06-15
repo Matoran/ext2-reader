@@ -89,3 +89,5 @@ ENV/
 .ropeproject
 
 mediumimg0.ext2.img
+.idea/
+smallimg0.ext2.img.gen
