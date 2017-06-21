@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
+# author: Mickaël Hoerdt
 import struct
+
+# create a group infos from raw data or params
 
 
 class ext2_bgroup_desc(object):
     def __init__(self, raw_bgroup_desc=None, bg_block_bitmap=0, bg_inode_bitmap=0, bg_inode_table=0,
                  bg_free_blocks_count=0, bg_free_inodes_count=0, bg_used_dirs_count=0):
-        if raw_bgroup_desc == None:
+        if raw_bgroup_desc is None:
             self.bg_block_bitmap = bg_block_bitmap
             self.bg_inode_bitmap = bg_inode_bitmap
             self.bg_inode_table = bg_inode_table

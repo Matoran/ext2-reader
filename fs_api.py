@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# authors: Cyril Iseli, Marco Rodrigues
+# date: may-june 2017
 import hexdump
 import stat
 import struct
@@ -100,6 +102,8 @@ class ext2_file_api(object):
     def dodir(self, path):
         inode = self.fs.inodes_list[self.fs.namei(path)]
         dirlist = []
+
+        # foreach bloc read data and append dirlist
         for i in xrange(int(ceil(float(inode.i_size)/self.fs.disk.blksize))):
             bloc = self.fs.bmap(inode, i)
             if bloc == 0:

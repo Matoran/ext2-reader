@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# author: Mickaël Hoerdt
 import os
 import sys
 import errno
@@ -7,6 +8,7 @@ import fs
 import fs_api
 
 from fuse import FUSE, FuseOSError, Operations
+# mount an image in userspace
 
 
 class Ext2UserFS(Operations):

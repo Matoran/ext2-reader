@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
+# author: Mickaël Hoerdt
 import struct
 import stat
 
-
+# create a inode from raw data or params
 # http://www.nongnu.org/ext2-doc/ext2.html#INODE-TABLE
 
 class ext2_inode(object):

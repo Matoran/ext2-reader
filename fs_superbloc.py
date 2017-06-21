@@ -53,16 +53,19 @@ class ext2_superbloc(object):
     # f_bavail is the available number of blocs
     def statfs(self, path):
         return {
-            'F_BSIZE': 0,
-            'F_FRSIZE': 0,
-            'F_BLOCKS': 0,
-            'F_BFREE': 10,
-            'F_BAVAIL': 10,
-            'F_FILES': 0,
-            'F_FFREE': 0,
-            'F_FAVAIL': 0,
-            'F_FLAG': 0,
-            'F_NAMEMAX': 0
+            'f_bsize': 1024 << self.s_log_block_size,
+            'f_frsize': 1024 >> self.s_log_frag_size if self.s_log_frag_size < 0 else 1024 << self.s_log_frag_size,
+            'f_blocks': self.s_blocks_count,
+            'f_bfree': self.s_free_blocks_count,
+            'f_bavail': self.s_free_blocks_count-self.s_r_blocks_count,
+
+            'f_files': self.s_inodes_count,
+            'f_ffree': self.s_free_inodes_count,
+            'f_favail': (self.s_free_blocks_count-self.s_r_blocks_count)*self.s_inodes_per_group,
+
+            'f_fsid': self.s_creator_os,
+            'f_flag': self.s_state,
+            'f_namemax': 255
         }
 
     def __str__(self):
